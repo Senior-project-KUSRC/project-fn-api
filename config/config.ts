@@ -15,6 +15,7 @@ const MYSQL = {
 };
 
 
+
 const SERVER_HOSTNAME = process.env.SERVER_HOSTNAME || 'localhost';
 const SERVER_PORT = process.env.SERVER_PORT || 3000 ;
 

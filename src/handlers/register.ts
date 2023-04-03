@@ -2,13 +2,12 @@ import { NextFunction, Request, Response } from 'express';
 import logging from '../../config/logging';
 import { Connect, Query } from '../../config/mysql';
 
-const NAMESPACE = "REGISTER"
+const NAMESPACE = "CREATE USER"
 
 export default interface member {
-    id_card: string ;
-    surname: string ; 
-    lastname: string ; 
-    email: string ;
+    email: string;
+    phone: string;
+    password: string;
 }
 
 export const register = async (req: Request, res: Response, next: NextFunction) => {
@@ -16,23 +15,29 @@ export const register = async (req: Request, res: Response, next: NextFunction) 
     logging.info(NAMESPACE, 'User have registered..');
 
     let {
-        id_card,
-        surname,
-        lastname,
-        email
+        email,
+        phone,
+        password,
+        username,
+        lastname
     } = req.body;
-    if (req.body.password == req.body.re_password) {
-        let query = `INSERT INTO aqb_user (id_card, username, lastname, email)
-                    VALUES ("${id_card}", "${surname}", "${lastname}", "${email}")`
-        logging.info(NAMESPACE, `${query}`);
+    
+    let date = Date.now()
+    const id = "U" + "_" + date
+    if (req.body.password) {
+        let insertAuth = `INSERT INTO aqb_auth (u_id, email, phone, password) VALUES('${id.toString()}','${email}','${phone}','${password}');`
+        let insertUser = `INSERT INTO aqb_user (u_id, email, username, lastname) VALUES('${id.toString()}', '${email}' , '${username}' , '${lastname}');`
         Connect()
             .then((connection) => {
-                Query(connection, query)
-                    .then((result) => {
-                        return res.status(200).json({
-                            result: `"${surname}" created successfully..`,
-                            message: result
-                        });
+                Query(connection, insertAuth)
+                    .then(() => {
+                        Query(connection, insertUser).then((result) => {
+                            console.log(`[${NAMESPACE}][info]: ${email} has already register..`)
+                            return res.status(200).json({
+                                result: `"${email}" created successfully..`,
+                                message: result
+                            });
+                        })
                     })
                     .catch((error) => {
                         logging.error(NAMESPACE, error.message, error);
